@@ -116,7 +116,7 @@ export default function Page() {
         throw new Error(queueData?.error || '提交队列失败')
       }
       
-      setMsg(`任务已提交成功！任务ID：${taskId}。请前往任务列表查看处理进度和结果。`)
+      setMsg(`任务已提交成功！任务ID：${taskId}。预计生成时间：3-5分钟，请前往任务列表查看处理进度和结果。`)
     } catch (err) {
       const message = err instanceof Error ? err.message : '提交失败'
       setError(message)
@@ -169,6 +169,9 @@ export default function Page() {
       )}
       <p className="mt-6 text-xs text-gray-500">
         仅会将上方 URL 发送到队列，其余参数使用默认值并投递到 moss_ttsd 频道。
+      </p>
+      <p className="mt-2 text-xs text-gray-600 bg-gray-50 p-3 rounded border-l-4 border-blue-300">
+        ⏱️ <strong>处理时间提醒：</strong>播客生成通常需要 3-5 分钟，请耐心等待。您可以在任务列表中实时查看处理进度。
       </p>
     </div>
   )

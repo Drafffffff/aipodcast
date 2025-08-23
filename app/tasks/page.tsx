@@ -7,7 +7,7 @@ interface Task {
   id: number
   url: string
   script_prompt?: string
-  status: 'pending' | 'done'
+  status: 'pending' | 'done' | 'failed'
   created_at: string
   result_url?: string
 }
@@ -18,7 +18,7 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'done'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'done' | 'failed'>('all')
   const pageSize = 10
 
   const fetchTasks = useCallback(async () => {
@@ -63,6 +63,9 @@ export default function TasksPage() {
     if (status === 'done') {
       return `${baseClasses} bg-green-100 text-green-800`
     }
+    if (status === 'failed') {
+      return `${baseClasses} bg-red-100 text-red-800`
+    }
     return `${baseClasses} bg-gray-100 text-gray-800`
   }
 
@@ -91,12 +94,21 @@ export default function TasksPage() {
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-xl sm:text-2xl font-bold">任务列表</h1>
-        <Link
-          href="/ttsd"
-          className="rounded bg-black px-4 py-2 text-center text-sm sm:text-base text-white hover:bg-gray-800"
-        >
-          新建任务
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={fetchTasks}
+            disabled={loading}
+            className="rounded border border-gray-300 bg-white px-4 py-2 text-center text-sm sm:text-base text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {loading ? '刷新中...' : '🔄 刷新'}
+          </button>
+          <Link
+            href="/ttsd"
+            className="rounded bg-black px-4 py-2 text-center text-sm sm:text-base text-white hover:bg-gray-800"
+          >
+            新建任务
+          </Link>
+        </div>
       </div>
 
       {/* 筛选器 */}
@@ -131,11 +143,34 @@ export default function TasksPage() {
         >
           已完成
         </button>
+        <button
+          onClick={() => setStatusFilter('failed')}
+          className={`px-3 py-1 rounded text-sm ${
+            statusFilter === 'failed'
+              ? 'bg-black text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          已失败
+        </button>
       </div>
 
       {error && (
         <div className="mb-4 text-red-600 text-sm" role="alert">
           {error}
+        </div>
+      )}
+
+      {/* 处理中任务提醒 */}
+      {tasks.some(task => task.status === 'pending') && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-blue-800 text-sm">
+            <span className="animate-pulse">⏱️</span>
+            <span className="font-medium">有任务正在处理中</span>
+          </div>
+          <p className="text-blue-700 text-xs mt-1">
+            播客生成通常需要 3-5 分钟，请点击上方 &ldquo;🔄 刷新&rdquo; 按钮或稍后刷新页面查看最新状态
+          </p>
         </div>
       )}
 
@@ -181,7 +216,7 @@ export default function TasksPage() {
                     </td>
                     <td className="px-4 py-4">
                       <span className={getStatusBadge(task.status)}>
-                        {task.status === 'pending' ? '处理中' : '已完成'}
+                        {task.status === 'pending' ? '处理中' : task.status === 'done' ? '已完成' : '已失败'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-500">
@@ -215,7 +250,7 @@ export default function TasksPage() {
                     </div>
                   </div>
                   <span className={getStatusBadge(task.status)}>
-                    {task.status === 'pending' ? '处理中' : '已完成'}
+                    {task.status === 'pending' ? '处理中' : task.status === 'done' ? '已完成' : '已失败'}
                   </span>
                 </div>
                 <div className="flex justify-end">
