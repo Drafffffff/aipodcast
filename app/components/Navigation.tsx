@@ -12,13 +12,13 @@ export default function Navigation() {
   ]
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-white shadow-sm border-b">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-xl font-bold text-gray-900">
-                📢  📢  📢 
+                无敌念书王
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

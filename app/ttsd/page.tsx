@@ -49,7 +49,7 @@ const PROMPT_TEXT_SPEAKER2 =
 
 export default function Page() {
   const [url, setUrl] = useState(
-    'https://mp.weixin.qq.com/s/YlEh8tx6_CbP3DmTC7lcGw',
+    '',
   )
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export default function Page() {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="请输入文章链接"
+            placeholder="请输入要转换的文章网址，如：https://example.com/article"
             className="w-full rounded border px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring"
             required
           />

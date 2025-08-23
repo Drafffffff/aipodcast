@@ -137,7 +137,12 @@ export default function TaskDetailPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
-        <div className="text-center">加载中...</div>
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+            <p className="text-gray-600">正在加载任务详情...</p>
+          </div>
+        </div>
       </div>
     )
   }
