@@ -3,7 +3,7 @@ import "./globals.css";
 import Navigation from "./components/Navigation";
 
 export const metadata: Metadata = {
-  title: "AI播客生成器",
+  title: "无敌念书王",
   description: "智能播客内容生成平台",
 };
 
