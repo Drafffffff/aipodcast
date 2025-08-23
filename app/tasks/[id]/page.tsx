@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { TASK_STATUS, getStatusDisplayText } from '@/lib/config/podcast'
 
 interface Task {
   id: number
@@ -125,10 +126,10 @@ export default function TaskDetailPage() {
 
   function getStatusBadge(status: string) {
     const baseClasses = 'px-3 py-1 text-sm rounded-full font-medium'
-    if (status === 'pending') {
+    if (status === TASK_STATUS.PENDING) {
       return `${baseClasses} bg-yellow-100 text-yellow-800`
     }
-    if (status === 'done') {
+    if (status === TASK_STATUS.DONE) {
       return `${baseClasses} bg-green-100 text-green-800`
     }
     return `${baseClasses} bg-gray-100 text-gray-800`
@@ -196,7 +197,7 @@ export default function TaskDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
           <h1 className="text-xl sm:text-2xl font-bold">任务详情</h1>
           <span className={getStatusBadge(task.status)}>
-            {task.status === 'pending' ? '处理中' : '已完成'}
+            {getStatusDisplayText(task.status)}
           </span>
         </div>
 
@@ -228,7 +229,7 @@ export default function TaskDetailPage() {
       </div>
 
       {/* 音频播放器 - 仅在已完成且有音频文件时显示 */}
-      {task.status === 'done' && task.result_url && (
+      {task.status === TASK_STATUS.DONE && task.result_url && (
         <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">播客音频</h2>
           
@@ -308,7 +309,7 @@ export default function TaskDetailPage() {
       )}
 
       {/* 处理中状态 */}
-      {task.status === 'pending' && (
+      {task.status === TASK_STATUS.PENDING && (
         <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">处理状态</h2>
           <div className="flex items-center gap-3">

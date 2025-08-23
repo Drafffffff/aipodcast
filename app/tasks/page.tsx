@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { TASK_STATUS, getStatusDisplayText } from '@/lib/config/podcast'
 
 interface Task {
   id: number
@@ -57,13 +58,13 @@ export default function TasksPage() {
 
   function getStatusBadge(status: string) {
     const baseClasses = 'px-2 py-1 text-xs rounded-full font-medium'
-    if (status === 'pending') {
+    if (status === TASK_STATUS.PENDING) {
       return `${baseClasses} bg-yellow-100 text-yellow-800`
     }
-    if (status === 'done') {
+    if (status === TASK_STATUS.DONE) {
       return `${baseClasses} bg-green-100 text-green-800`
     }
-    if (status === 'failed') {
+    if (status === TASK_STATUS.FAILED) {
       return `${baseClasses} bg-red-100 text-red-800`
     }
     return `${baseClasses} bg-gray-100 text-gray-800`
@@ -124,9 +125,9 @@ export default function TasksPage() {
           全部
         </button>
         <button
-          onClick={() => setStatusFilter('pending')}
+          onClick={() => setStatusFilter(TASK_STATUS.PENDING)}
           className={`px-3 py-1 rounded text-sm ${
-            statusFilter === 'pending'
+            statusFilter === TASK_STATUS.PENDING
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
@@ -134,9 +135,9 @@ export default function TasksPage() {
           处理中
         </button>
         <button
-          onClick={() => setStatusFilter('done')}
+          onClick={() => setStatusFilter(TASK_STATUS.DONE)}
           className={`px-3 py-1 rounded text-sm ${
-            statusFilter === 'done'
+            statusFilter === TASK_STATUS.DONE
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
@@ -144,9 +145,9 @@ export default function TasksPage() {
           已完成
         </button>
         <button
-          onClick={() => setStatusFilter('failed')}
+          onClick={() => setStatusFilter(TASK_STATUS.FAILED)}
           className={`px-3 py-1 rounded text-sm ${
-            statusFilter === 'failed'
+            statusFilter === TASK_STATUS.FAILED
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
@@ -162,7 +163,7 @@ export default function TasksPage() {
       )}
 
       {/* 处理中任务提醒 */}
-      {tasks.some(task => task.status === 'pending') && (
+      {tasks.some(task => task.status === TASK_STATUS.PENDING) && (
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center gap-2 text-blue-800 text-sm">
             <span className="animate-pulse">⏱️</span>
@@ -216,7 +217,7 @@ export default function TasksPage() {
                     </td>
                     <td className="px-4 py-4">
                       <span className={getStatusBadge(task.status)}>
-                        {task.status === 'pending' ? '处理中' : task.status === 'done' ? '已完成' : '已失败'}
+                        {getStatusDisplayText(task.status)}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-500">
@@ -250,7 +251,7 @@ export default function TasksPage() {
                     </div>
                   </div>
                   <span className={getStatusBadge(task.status)}>
-                    {task.status === 'pending' ? '处理中' : task.status === 'done' ? '已完成' : '已失败'}
+                    {getStatusDisplayText(task.status)}
                   </span>
                 </div>
                 <div className="flex justify-end">
