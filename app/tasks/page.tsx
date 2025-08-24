@@ -16,6 +16,7 @@ interface Task {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [pageLoading, setPageLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -23,12 +24,18 @@ export default function TasksPage() {
   const pageSize = 10
 
   const fetchTasks = useCallback(async () => {
-    setLoading(true)
+    // 如果是初次加载，使用loading状态；如果是翻页或筛选，使用pageLoading状态
+    if (tasks.length === 0) {
+      setLoading(true)
+    } else {
+      setPageLoading(true)
+    }
+    
     try {
       const from = (page - 1) * pageSize
       const to = from + pageSize - 1
       
-      const url = `/api/pod_cast_gen?from=${from}&to=${to}`
+      const url = `/api/pod_cast_gen?from=${from}&to=${to}&status=${statusFilter}`
 
       const res = await fetch(url)
       const result = await res.json()
@@ -37,20 +44,16 @@ export default function TasksPage() {
         throw new Error(result.error || '获取任务列表失败')
       }
 
-      let filteredTasks = result.data || []
-      if (statusFilter !== 'all') {
-        filteredTasks = filteredTasks.filter((task: Task) => task.status === statusFilter)
-      }
-
-      setTasks(filteredTasks)
-      setTotal(filteredTasks.length) // 简化版本，实际应该从后端返回总数
+      setTasks(result.data || [])
+      setTotal(result.total || 0)
     } catch (err) {
       const message = err instanceof Error ? err.message : '获取任务列表失败'
       setError(message)
     } finally {
       setLoading(false)
+      setPageLoading(false)
     }
-  }, [page, statusFilter])
+  }, [page, statusFilter, tasks.length])
 
   useEffect(() => {
     fetchTasks()
@@ -98,10 +101,10 @@ export default function TasksPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={fetchTasks}
-            disabled={loading}
+            disabled={loading || pageLoading}
             className="rounded border border-gray-300 bg-white px-4 py-2 text-center text-sm sm:text-base text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
-            {loading ? '刷新中...' : '🔄 刷新'}
+            {loading || pageLoading ? '刷新中...' : '🔄 刷新'}
           </button>
           <Link
             href="/ttsd"
@@ -115,8 +118,12 @@ export default function TasksPage() {
       {/* 筛选器 */}
       <div className="mb-4 flex flex-wrap gap-2">
         <button
-          onClick={() => setStatusFilter('all')}
-          className={`px-3 py-1 rounded text-sm ${
+          onClick={() => {
+            setStatusFilter('all')
+            setPage(1)
+          }}
+          disabled={pageLoading}
+          className={`px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
             statusFilter === 'all'
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -125,8 +132,12 @@ export default function TasksPage() {
           全部
         </button>
         <button
-          onClick={() => setStatusFilter(TASK_STATUS.PENDING)}
-          className={`px-3 py-1 rounded text-sm ${
+          onClick={() => {
+            setStatusFilter(TASK_STATUS.PENDING)
+            setPage(1)
+          }}
+          disabled={pageLoading}
+          className={`px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
             statusFilter === TASK_STATUS.PENDING
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -135,8 +146,12 @@ export default function TasksPage() {
           处理中
         </button>
         <button
-          onClick={() => setStatusFilter(TASK_STATUS.DONE)}
-          className={`px-3 py-1 rounded text-sm ${
+          onClick={() => {
+            setStatusFilter(TASK_STATUS.DONE)
+            setPage(1)
+          }}
+          disabled={pageLoading}
+          className={`px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
             statusFilter === TASK_STATUS.DONE
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -145,8 +160,12 @@ export default function TasksPage() {
           已完成
         </button>
         <button
-          onClick={() => setStatusFilter(TASK_STATUS.FAILED)}
-          className={`px-3 py-1 rounded text-sm ${
+          onClick={() => {
+            setStatusFilter(TASK_STATUS.FAILED)
+            setPage(1)
+          }}
+          disabled={pageLoading}
+          className={`px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
             statusFilter === TASK_STATUS.FAILED
               ? 'bg-black text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -187,7 +206,17 @@ export default function TasksPage() {
           </Link>
         </div>
       ) : (
-        <>
+        <div className="relative">
+          {/* 分页加载遮罩 */}
+          {pageLoading && (
+            <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center rounded-lg">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-black mb-2"></div>
+                <p className="text-gray-600 text-sm">加载中...</p>
+              </div>
+            </div>
+          )}
+          
           {/* 桌面端表格视图 */}
           <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
             <table className="w-full">
@@ -265,29 +294,29 @@ export default function TasksPage() {
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* 分页 */}
       {tasks.length > 0 && (
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm text-gray-500">
-            共 {total} 条记录
+            共 {total} 条记录，第 {Math.min((page - 1) * pageSize + 1, total)} - {Math.min(page * pageSize, total)} 条
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
+              disabled={page === 1 || pageLoading}
               className="px-3 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               上一页
             </button>
             <span className="px-3 py-2 text-sm">
-              第 {page} 页
+              第 {page} 页 / 共 {Math.ceil(total / pageSize)} 页
             </span>
             <button
               onClick={() => setPage(p => p + 1)}
-              disabled={tasks.length < pageSize}
+              disabled={page >= Math.ceil(total / pageSize) || pageLoading}
               className="px-3 py-2 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               下一页

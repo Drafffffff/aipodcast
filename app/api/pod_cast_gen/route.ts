@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   }
 }
 
-// GET /api/pod_cast_gen?id=...&select=col1,col2&from=0&to=9
+// GET /api/pod_cast_gen?id=...&select=col1,col2&from=0&to=9&status=pending
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
@@ -51,11 +51,16 @@ export async function GET(req: Request) {
     const select = searchParams.get('select') || '*'
     const from = searchParams.get('from')
     const to = searchParams.get('to')
+    const status = searchParams.get('status')
 
-    let query = supabaseAdmin.from('pod_cast_gen').select(select).order('created_at', { ascending: false })
+    let query = supabaseAdmin.from('pod_cast_gen').select(select, { count: 'exact' }).order('created_at', { ascending: false })
 
     if (id) {
       query = query.eq('id', id)
+    }
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
     }
 
     if (from !== null && to !== null) {
@@ -66,11 +71,11 @@ export async function GET(req: Request) {
       }
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await query
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
-    return NextResponse.json({ data })
+    return NextResponse.json({ data, total: count })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
