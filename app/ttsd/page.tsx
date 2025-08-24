@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   DEFAULT_PODCAST_CONFIG,
@@ -16,6 +16,40 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pendingTasks, setPendingTasks] = useState(0)
+  const [loadingPendingTasks, setLoadingPendingTasks] = useState(true)
+
+  // 获取进行中的任务数量
+  const fetchPendingTasks = async () => {
+    try {
+      const res = await fetch(`/api/pod_cast_gen?status=${TASK_STATUS.PENDING}`)
+      const result = await res.json()
+      if (res.ok) {
+        setPendingTasks(result.total || 0)
+      }
+    } catch (err) {
+      console.error('获取进行中任务数量失败:', err)
+    } finally {
+      setLoadingPendingTasks(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPendingTasks()
+  }, [])
+
+  // 计算预估等待时间
+  const getEstimatedWaitTime = () => {
+    if (pendingTasks === 0) return '立即开始处理'
+    
+    const minMinutes = pendingTasks * 3
+    const maxMinutes = pendingTasks * 5
+    
+    if (minMinutes === maxMinutes) {
+      return `预计等待 ${minMinutes} 分钟`
+    }
+    return `预计等待 ${minMinutes}-${maxMinutes} 分钟`
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -79,6 +113,8 @@ export default function Page() {
       }
       
       setMsg(MESSAGES.SUCCESS.TASK_SUBMITTED(taskId.toString()))
+      // 提交成功后刷新任务队列状态
+      fetchPendingTasks()
     } catch (err) {
       const message = err instanceof Error ? err.message : MESSAGES.ERROR.SUBMIT_FAILED
       setError(message)
@@ -132,9 +168,25 @@ export default function Page() {
       <p className="mt-6 text-xs text-gray-500">
         {MESSAGES.INFO.QUEUE_INFO}
       </p>
-      <p className="mt-2 text-xs text-gray-600 bg-gray-50 p-3 rounded border-l-4 border-blue-300">
-        {MESSAGES.INFO.PROCESSING_TIME}
-      </p>
+      
+      {/* 任务队列状态和时间提示 */}
+      <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-3 rounded border-l-4 border-blue-300">
+        <div className="space-y-1">
+          <p>{MESSAGES.INFO.PROCESSING_TIME}</p>
+          {loadingPendingTasks ? (
+            <p className="text-blue-600">
+              <span className="inline-block animate-pulse">⏳</span> 正在检查任务队列状态...
+            </p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600">📊</span>
+              <span>
+                当前有 <strong className="text-blue-700">{pendingTasks}</strong> 个任务正在处理中，{getEstimatedWaitTime()}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
